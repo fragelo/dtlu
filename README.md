@@ -127,9 +127,6 @@ fetch logs
 dtlu/
 ├── app.config.json          # App manifest — ID, name, version, IAM scopes
 ├── package.json             # npm dependencies (name: dtlu)
-├── docs/
-│   ├── DTLU_Documentation.docx  # Full technical documentation
-│   └── DTLU_Deck.pptx           # Presentation deck
 └── ui/
     ├── main.tsx             # React entrypoint
     ├── assets/icon.svg      # App icon
@@ -147,17 +144,9 @@ dtlu/
 
 ---
 
-## 📄 Documentation
-
-Full technical documentation available in [`docs/DTLU_Documentation.docx`](docs/DTLU_Documentation.docx)
-
-Presentation deck available in [`docs/DTLU_Deck.pptx`](docs/DTLU_Deck.pptx)
-
----
-
 ## 👤 Author
 
-**Francesco Gelo** — Lead Solutions Engineer, Dynatrace  
+**Francesco Gelo** — Lead Solutions Engineer, Dynatrace
 Built with [Dynatrace App Toolkit](https://developer.dynatrace.com/quickstart/app-toolkit/)
 
 ---
