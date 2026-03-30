@@ -1,49 +1,167 @@
-# Getting Started with your Dynatrace App
+# 📤 Dynatrace Log Uploader (DTLU)
 
-This project was bootstrapped with Dynatrace App Toolkit.
+A custom Dynatrace App that lets you upload any log file — CSV or plain text — directly into **Dynatrace Grail** via the Log Ingestion SDK. No infrastructure, no API tokens, no CLI required.
 
-It uses React in combination with TypeScript, to provide great developer experience.
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Platform](https://img.shields.io/badge/platform-Dynatrace%20SaaS-darkblue)
+![Node](https://img.shields.io/badge/node-24%20LTS-green)
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## ✨ Features
 
-### `npm run start`
+- 📄 **Generic log files** — any `.log`, `.txt`, `.out` file; each line → one log record
+- 📊 **CSV files** — columns auto-mapped as structured Grail attributes
+- 🕐 **Timestamp handling** — auto-detected by column name or number; falls back to ingestion time
+- 🏷️ **log.type field** — add a custom type to all records (default: `logsample`)
+- ➕ **Custom attribute** — add any `key=value` pair to all records
+- 📦 **Batched ingestion** — 1000 records per API call, progress bar included
+- 📖 **Built-in instructions** — IAM setup guide built into the app
+- 📁 **Sample files** — downloadable test files with upload hints
 
-Runs the app in the development mode. A new browser window with your running app will be automatically opened.
+---
 
-Edit a component file in `ui` and save it. The page will reload when you make changes. You may also see any errors in the console.
+## 🚀 Quick Install (No CLI needed)
 
-### `npm run build`
+1. Download **`dtlu.zip`** from [Releases](../../releases)
+2. In Dynatrace: **Hub → Manage → Upload app**
+3. Upload `dtlu.zip`
+4. Open the app → **Instructions** tab → follow the IAM setup (3 steps)
 
-Builds the app for production to the `dist` folder. It correctly bundles your app in production mode and optimizes the build for the best performance.
+---
 
-### `npm run deploy`
+## 🔐 IAM Setup (Required — 3 steps)
 
-Builds the app and deploys it to the specified environment in `app.config.json`.
+### 1. Create a Policy
+Go to `myaccount.dynatrace.com` → **Identity & access management → Policy management → Create policy**
+```
+Policy name: log-uploader-write
 
-### `npm run uninstall
+ALLOW storage:logs:write;
+ALLOW storage:buckets:read;
+```
 
-Uninstalls the app from the specified environment in `app.config.json`.
+### 2. Create a Group and Bind the Policy
+- **Group management → Create group** → name: `log-uploader-users`
+- Click **+ Permission** → select `log-uploader-write` → scope: your environment
+- Save
 
-### `npm run generate:function`
+### 3. Add Your User to the Group
+- **User management** → find your user → add to group `log-uploader-users` → Save
 
-Generates a new serverless function for your app in the `api` folder.
+---
 
-### `npm run update`
+## 🛠️ Build from Source
+```bash
+# 1. Bootstrap a new project linked to your DT environment
+npx dt-app@latest create --environment-url https://YOUR_ENV_ID.apps.dynatrace.com
+# When prompted for name: dtlu
 
-Updates @dynatrace-scoped packages to the latest version and applies automatic migrations.
+# 2. Enter the generated folder and copy our ui/ files
+cd dtlu
+cp -r /path/to/dtlu-source/ui/* ./ui/
 
-### `npm run info`
+# 3. Deploy
+npx dt-app deploy
 
-Outputs the CLI and environment information.
+# 4. Build the Hub-uploadable zip
+npx dt-app deploy --dry-run
+# → rename out/artifact.zip to dtlu.zip
+```
 
-### `npm run help`
+---
 
-Outputs help for the Dynatrace App Toolkit.
+## 📋 CSV Format
 
-## Learn more
+| Column | Accepted Names | Notes |
+|--------|---------------|-------|
+| Timestamp | `timestamp`, `@timestamp`, `date` | ISO-8601, epoch ms/s |
+| Severity | `severity`, `loglevel`, `level` | INFO / WARN / ERROR |
+| Log body | full CSV row | Always stored as `content` |
+| Custom attrs | any other column | Ingested as named attributes |
 
-You can find more information on how to use all the features of the new Dynatrace Platform in [Dynatrace Developer](https://dt-url.net/developers).
+**Minimum valid CSV:**
+```csv
+content
+User login successful
+Database connection timeout
+Payment processed
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+**Full example:**
+```csv
+severity,service.name,host.name,http.status_code,duration_ms,message
+INFO,auth-service,web-host-01,200,45,User login successful
+ERROR,order-service,db-host-01,503,30012,Database connection timeout
+WARN,api-gateway,web-host-02,200,532,Response time exceeded 500ms
+```
+
+---
+
+## 🔍 DQL Queries After Upload
+```dql
+// Filter by service
+fetch logs
+| filter service.name == "order-service"
+| sort timestamp desc
+
+// Filter by severity
+fetch logs
+| filter severity == "ERROR"
+| fields timestamp, severity, service.name, content
+
+// Full text search
+fetch logs
+| filter contains(content, "timeout")
+
+// Filter by log type
+fetch logs
+| filter log.type == "logsample"
+| summarize count(), by: {severity}
+```
+
+---
+
+## 📁 Project Structure
+```
+dtlu/
+├── app.config.json          # App manifest — ID, name, version, IAM scopes
+├── package.json             # npm dependencies (name: dtlu)
+├── docs/
+│   ├── DTLU_Documentation.docx  # Full technical documentation
+│   └── DTLU_Deck.pptx           # Presentation deck
+└── ui/
+    ├── main.tsx             # React entrypoint
+    ├── assets/icon.svg      # App icon
+    └── app/
+        ├── App.tsx          # 4-tab navigation shell
+        ├── pages/
+        │   ├── UploadPage.tsx       # Main upload UI
+        │   ├── InstructionsPage.tsx # IAM setup guide
+        │   ├── SamplesPage.tsx      # Downloadable test files
+        │   └── ConfigPage.tsx       # Optional token config
+        └── utils/
+            ├── csvParser.ts         # CSV + plain text parser
+            └── logIngestionService.ts # logsClient wrapper
+```
+
+---
+
+## 📄 Documentation
+
+Full technical documentation available in [`docs/DTLU_Documentation.docx`](docs/DTLU_Documentation.docx)
+
+Presentation deck available in [`docs/DTLU_Deck.pptx`](docs/DTLU_Deck.pptx)
+
+---
+
+## 👤 Author
+
+**Francesco Gelo** — Lead Solutions Engineer, Dynatrace  
+Built with [Dynatrace App Toolkit](https://developer.dynatrace.com/quickstart/app-toolkit/)
+
+---
+
+## 📜 License
+
+MIT
