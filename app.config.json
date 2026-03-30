@@ -1,0 +1,20 @@
+{
+  "environmentUrl": "https://nnr75930.apps.dynatrace.com",
+  "app": {
+    "id": "my.dtlu.log.uploader",
+    "name": "Dynatrace Log Uploader",
+    "version": "1.0.0",
+    "description": "Upload any log file and ingest it into Dynatrace Grail",
+    "icon": "ui/assets/icon.svg",
+    "scopes": [
+      {
+        "name": "storage:logs:write",
+        "comment": "For uploading logs"
+      },
+      {
+        "name": "storage:buckets:read",
+        "comment": "For uploading logs"
+      }
+    ]
+  }
+}

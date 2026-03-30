@@ -1,0 +1,6 @@
+node_modules/
+.dt-app/
+out/
+dist/
+*.log
+.env
